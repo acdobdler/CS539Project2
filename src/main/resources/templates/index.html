@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+	<style type="text/css">
+		.comments {
+			width:100%;
+			overflow:auto;
+			word-break:break-all;
+			border-radius: 7px;
+			font-size: 20px;
+		}
+		table, th, td {
+			border: 1px solid black;
+		}
+		.blackGround{
+			text-decoration:none;
+			background:#2f435e;
+			color:#f2f2f2;
+			font-size:16px;
+			font-weight:bold;
+			border-radius:3px;
+			-webkit-transition:all linear 0.30s;
+			-moz-transition:all linear 0.30s;transition:all linear 0.30s;
+		}
+	</style>
+	<title>CS 539</title>
+</head>
+<h1 align="center">Query Data</h1>
+
+<div>
+	<input type="radio" name="engine" value="GCP" checked>Google Big Query
+	<input type="radio" name="engine" value="MSSQL">MicroSoft SQL
+</div>
+Query:
+<div class="query">
+	<textarea class="comments" type="text" placeholder="Please input your SQL here." rows="5" cols="50"></textarea>
+	<br><br>
+	<button class="blackGround">Query</button><p id="elapsedTime" align="right"></p>
+</div>
+
+<form >
+	<div class="comments" style="position: center;">
+		<ul id="aisle"></ul>
+	</div>
+</form>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js'></script>
+<script>
+    $('.query > button').on('click',function(){
+        $('#aisle').empty()
+        var beginTime = +new Date();
+        var GCPorMSSQL = document.getElementsByName('engine')
+		var flag = 0;
+        if(GCPorMSSQL[0].checked) {
+            flag = 0;
+		} else {
+            flag = 1;
+		}
+        let sqltxt = $('.query > textarea').val().trim()
+        if(!sqltxt) return false;
+        let words = sqltxt.split(" ")
+        if(words[0] == "select" || words[0] == "SELECT") {
+            $.ajax({
+                url:'http://localhost:8080/db/query',
+                method:'get',
+                dataType:'json',
+                data:{
+                    sql:sqltxt,
+					flag:flag
+                }
+            }).done(function(res){
+                console.log(res)
+                $('#aisle').empty()
+                $('#aisle').append("<p style='color: green;'>Executed successfully!</p>")
+                $('#aisle').append("<table id='aisle'>")
+                $('#aisle').append('<tr>')
+                for(var key in res[0]) {
+                    $('#aisle').append('<th>'+key+'</th>')
+                }
+                $('#aisle').append('</tr>')
+                res.forEach(function(obj){
+                    $('#aisle').append('<tr>')
+                    for(var key in obj) {
+                        $('#aisle').append('<td>' + obj[key] + '</td>')
+                    }
+                    $('#aisle').append('</tr>')
+                })
+                $('#aisle').append("</table>")
+                var endTime = +new Date();
+                $('#elapsedTime').empty();
+                $('#elapsedTime').append("Elapsed Time: " + (endTime - beginTime) + "ms");
+            }).fail(function(err){
+                console.log(err)
+                $('#aisle').empty()
+                $('#aisle').append("<p style='color: red;'>Executed unsuccessfully!</p>")
+                var endTime = +new Date();
+                $('#elapsedTime').empty();
+                $('#elapsedTime').append("Elapsed Time: " + (endTime - beginTime) + "ms");
+            })
+        } else {
+            alert("send it!");
+            $.ajax({
+                url:'http://localhost:8080/db/update',
+                method:'get',
+                dataType:'json',
+                data:{
+                    sql:sqltxt,
+                    flag:flag
+                }
+            }).done(function(res){
+                console.log(res)
+                $('#aisle').empty()
+                $('#aisle').append("<p style='color: green;'>Executed successfully!</p>")
+                var endTime = +new Date();
+                $('#elapsedTime').empty();
+                $('#elapsedTime').append("Elapsed Time: " + (endTime - beginTime) + "ms");
+            }).fail(function(err){
+                console.log(err)
+                $('#aisle').empty()
+                $('#aisle').append("<p style='color: red;'>Executed unsuccessfully!</p>")
+                var endTime = +new Date();
+                $('#elapsedTime').empty();
+                $('#elapsedTime').append("Elapsed Time: " + (endTime - beginTime) + "ms");
+            })
+        }
+    })
+</script>
+</body>
+</html>
